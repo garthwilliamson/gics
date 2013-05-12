@@ -1,3 +1,11 @@
 {
-
+	"literal1": "lit_val1",
+	"int1": 1,
+	"float1": 3.14,
+	"list1": [
+		"item1",
+		"item2",
+		"<<json1.literal1>>"
+	],
+	"ref1": "<<json1.int1>>"
 }
