@@ -114,7 +114,14 @@ def Config(path_or_paths, name):
     elif path_or_paths[-5:] == ".json":
         config = JsonNode(name, path_or_paths)
     else:
-        config = DirNode(name, path_or_paths)
+        try:
+            config = DirNode(name, path_or_paths)
+        except OSError as e:
+            print(dir(e))
+            if e.errno == 20:
+                pass
+            else:
+                raise e
     link_refs(config)
     return(config)
 
@@ -329,9 +336,15 @@ class DirNode(ConfigNode):
             if item[-5:] == ".json":
                 self._append(JsonNode(item[0:-5], dir_name + "/" + item))
             else:
-                self._append(DirNode(item, dir_name + "/" + item))
+                try:
+                    self._append(DirNode(item, dir_name + "/" + item))
+                except OSError as e:
+                    if e.errno == 20:
+                        pass
+                    else:
+                        raise e
 
-                        
+
 class JsonNode(ConfigNode):
     def __init__(self, name, file_name):
         """ Takes a filename as well """
