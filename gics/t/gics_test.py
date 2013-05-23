@@ -45,7 +45,12 @@ class TestConfigNode(unittest.TestCase):
         self.assertTrue("node2" in b)
         self.assertTrue("node3" in b)
 
-    
+    def test_indexing(self):
+        self.assertEqual(self.cn["node2"]._name, "node2", "Can't access via index")
+
+    def test_sets(self):
+        self.cn.node2.node3 = self.cn.node2
+        self.assertEqual(self.cn.node2["node3"], self.cn.node3)
         
 class TestDirNode(unittest.TestCase):
     def test_init(self):
@@ -103,4 +108,4 @@ class TestConfigJoin(unittest.TestCase):
         c1 = gics.Config("t/data/config1/dir1", "dir1")
         c2 = gics.Config("t/data/config1/dir2", "dir2")
         c = gics.join((c1, c2), "config")
-    
+

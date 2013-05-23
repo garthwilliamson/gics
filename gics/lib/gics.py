@@ -223,7 +223,7 @@ class ConfigNode(object):
         self._reference_children = OrderedDict()
         
         self._parent = None
-
+        self.__setattr__ = self._setattr
         
     def __str__(self):
         return self._name
@@ -280,6 +280,27 @@ class ConfigNode(object):
             return self.__dict__[name]
 
 
+    def _setattr(self, name, value):
+        # We can't set attr before we have inited
+        if name in self._reference_children:
+            del self._reference_children[name]
+            self._set(name, value)
+        elif name in self._children:
+            del self._children[name]
+            self._set(name, value)
+        elif name not in self.__dict__:
+            raise AttributeError("{0} not in {1}".format(name, self._canon_name()))
+        else:
+            self.__dict__[name] = value
+
+
+    def _set(self, name, value):
+        if isinstance(value, ConfigNode):
+            self._reference_children(name, value)
+        else:
+            self._children[name] = value
+
+
     def _canon_name(self):
         """ The canonical name of this node
         
@@ -325,8 +346,45 @@ class ConfigNode(object):
             return self._children[name]
         else:
             raise KeyError("No children called " + name)
-             
-                
+
+
+    # Methods to emulate container types:
+    def __len__(self):
+        return len(self._children) + len(self._reference_children)
+
+
+    def __getitem__(self, key):
+        if key in self._reference_children:
+            return self._reference_children[key]
+        elif key in self._children:
+            return self._children[key]
+        else:
+            raise KeyError("{0} not in {1}".format(key, self._canon_name()))
+
+
+    def __setitem__(self, key, value):
+        if key not in self.__dict__:
+            self.__setattr__(key, value)
+        else:
+            raise KeyError("{0} not in {1}".format(key, self._canon_name()))
+
+
+    def __delitem__(self, key):
+        if key in self._reference_children:
+            del(self._reference_children[key])
+        elif key in self._children:
+            del(self._children[key])
+        else:
+            raise KeyError("{0} not in {1}".format(key, self._canon_name()))
+
+
+    def __iter__(self):
+        for k in self.cn._reference_children:
+            yield k
+        for k in self.cn.children:
+            yield k
+
+
 class DirNode(ConfigNode):
     def __init__(self, name, dir_name):
         """ Takes a directory name as well """
@@ -360,4 +418,5 @@ class JsonNode(ConfigNode):
         if file_name is None:
             file_name = self._file_name
         #TODO: Do a save
-            
+        # iterate through children, if a ref then stick a ref in, else jsonarize
+
