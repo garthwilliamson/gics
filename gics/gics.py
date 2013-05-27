@@ -72,6 +72,7 @@ Usage:
         
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 from __future__ import print_function
 
 import json
@@ -80,7 +81,7 @@ import os
 try:
     from collections import OrderedDict
 except ImportError:
-    from ordereddict import OrderedDict
+    from .ordereddict import OrderedDict
 
 
 REF_DELIMS = ("<<", ">>")
