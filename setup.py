@@ -1,4 +1,5 @@
-from distutils.core import setup
+#!/usr/bin/python
+from setuptools import setup
 
 #package_dir = {'gics': 'lib'}
 
@@ -9,5 +10,5 @@ setup(name='gics',
       url='https://github.com/garthwilliamson/gics',
       description='A slightly insane config system',
       packages=['gics'],
-      #py_modules=['gics'],
+      test_suite='t',
      )
