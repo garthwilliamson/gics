@@ -118,7 +118,6 @@ def Config(path_or_paths, name):
         try:
             config = DirNode(name, path_or_paths)
         except OSError as e:
-            print(dir(e))
             if e.errno == 20:
                 pass
             else:
@@ -163,10 +162,11 @@ def link_refs(config):
                 elif isinstance(attrib, basestring):
                     r = get_ref(config, attrib)
                     if r is not None:
-                        c._children[name] = r
+                        c._reference_children[name] = r
+                        c._children[name] = ">>" + attrib + "<<"
                         changes = True
-                                    
-                            
+
+
 def get_ref(config, name):
     """ Used to find the part of the config in the name place.
     
@@ -398,7 +398,7 @@ class DirNode(ConfigNode):
                 try:
                     self._append(DirNode(item, dir_name + "/" + item))
                 except OSError as e:
-                    if e.errno == 20:
+                    if e.errno in (20, 22):
                         pass
                     else:
                         raise e

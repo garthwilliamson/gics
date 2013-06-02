@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import unittest
 import gics
-import os
 
 class TestGicsConfig(unittest.TestCase):
     def test_gics_config_dict(self):
@@ -19,6 +18,10 @@ class TestGicsConfig(unittest.TestCase):
     def test_gics_config_dir(self):
         c = gics.Config("t/data/config1/dir2", "config")
         self.assertEqual(c.json1.literal1, "lit_val1")
+        
+    def test_loops(self):
+        loop_c = gics.Config("t/data/config1/dir3", "loopy")
+        self.assertEqual(loop_c.loop1.loop2.loop1.loop2.name, "loop2")
 
 
 class TestConfigNode(unittest.TestCase):
@@ -51,7 +54,7 @@ class TestConfigNode(unittest.TestCase):
     def test_sets(self):
         self.cn.node2.node3 = self.cn.node2
         self.assertEqual(self.cn.node2["node3"], self.cn.node3)
-        
+
 class TestDirNode(unittest.TestCase):
     def test_init(self):
         dn = gics.DirNode("dir1", "t/data/config1/dir1")
@@ -108,4 +111,6 @@ class TestConfigJoin(unittest.TestCase):
         c1 = gics.Config("t/data/config1/dir1", "dir1")
         c2 = gics.Config("t/data/config1/dir2", "dir2")
         c = gics.join((c1, c2), "config")
+        self.assertEqual(c.dir1._name, "dir1")
+        self.assertEqual(c.dir2._name, "dir2")
 

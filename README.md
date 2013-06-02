@@ -7,4 +7,4 @@ Documentation is provided in pydoc format in gics/gics.py
 To build, run python setup.py build
 
 ## Tests
-To test, run python setupd.py test
+To test, run python setup.py test
