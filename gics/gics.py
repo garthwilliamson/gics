@@ -152,12 +152,15 @@ def link_refs(config):
                 if isinstance(attrib, list):
                     out_list = []
                     for i in attrib:
-                        r = get_ref(config, i)
-                        if r is None:
-                            out_list.append(i)
+                        if isinstance(i, basestring):
+                            r = get_ref(config, i)
+                            if r is None:
+                                out_list.append(i)
+                            if r is not None:
+                                out_list.append(r)
+                                changes = True
                         else:
-                            out_list.append(r)
-                            changes = True
+                            out_list.append(i)
                     c._children[name] = out_list
                 elif isinstance(attrib, basestring):
                     r = get_ref(config, attrib)
