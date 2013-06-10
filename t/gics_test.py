@@ -52,7 +52,7 @@ class TestConfigNode(unittest.TestCase):
         self.assertEqual(self.cn["node2"]._name, "node2", "Can't access via index")
 
     def test_sets(self):
-        self.cn.node2.node3 = self.cn.node2
+        self.cn.node2.node3 = self.cn.node3
         self.assertEqual(self.cn.node2["node3"], self.cn.node3)
 
 class TestDirNode(unittest.TestCase):

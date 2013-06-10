@@ -87,6 +87,23 @@ except ImportError:
 REF_DELIMS = ("<<", ">>")
 
 
+_last_gics_error = None
+def get_error():
+    """ Ugly way to retrieve errors.
+    Some things, such as jinja2, don't provide enough info in traceback
+
+    Returns: The exception which was thrown
+
+    """
+    return _last_gics_error
+
+
+def raise_error(e):
+    global _last_gics_error
+    _last_gics_error = e
+    raise e
+
+
 def Config(path_or_paths, name):
     """ Returns a ConfigNode object created and instantiated from the arguments
     
@@ -156,7 +173,8 @@ def link_refs(config):
                             r = get_ref(config, i)
                             if r is None:
                                 out_list.append(i)
-                            if r is not None:
+                            else:
+                                # TODO: Deconvert lists - they won't save properly
                                 out_list.append(r)
                                 changes = True
                         else:
@@ -166,8 +184,11 @@ def link_refs(config):
                     r = get_ref(config, attrib)
                     if r is not None:
                         c._reference_children[name] = r
-                        c._children[name] = ">>" + attrib + "<<"
+                        del c._children[name]
                         changes = True
+                    else:
+                        pass
+                        # print("Failed to get ref for " + attrib)
 
 
 def get_ref(config, name):
@@ -222,12 +243,10 @@ class ConfigNode(object):
             name: A string to call this node
         
         """
-        self._name = name
-        self._children = OrderedDict()
-        self._reference_children = OrderedDict()
-        
-        self._parent = None
-        self.__setattr__ = self._setattr
+        self.__dict__["_name"] = name
+        self.__dict__["_children"] = OrderedDict()
+        self.__dict__["_reference_children"] = OrderedDict()
+        self.__dict__["_parent"] = None
         
     def __str__(self):
         return self._name
@@ -279,28 +298,29 @@ class ConfigNode(object):
         elif name in self._children:
             return self._children[name]
         elif name not in self.__dict__:
-            raise AttributeError("{0} not in {1}".format(name, self._canon_name()))
+            raise_error(AttributeError(
+                "{0} not in {1}".format(name, self._canon_name())
+            ))
         else:
             return self.__dict__[name]
 
 
-    def _setattr(self, name, value):
+    def __setattr__(self, name, value):
         # We can't set attr before we have inited
         if name in self._reference_children:
-            del self._reference_children[name]
-            self._set(name, value)
+            self._reference_children[name] = value
         elif name in self._children:
-            del self._children[name]
-            self._set(name, value)
+            self._children[name] = value
         elif name not in self.__dict__:
-            raise AttributeError("{0} not in {1}".format(name, self._canon_name()))
+            self._set(name, value)
+            #raise AttributeError("{0} not in {1}".format(name, self._canon_name()))
         else:
             self.__dict__[name] = value
 
 
     def _set(self, name, value):
         if isinstance(value, ConfigNode):
-            self._reference_children(name, value)
+            self._reference_children[name] = value
         else:
             self._children[name] = value
 
@@ -349,7 +369,7 @@ class ConfigNode(object):
         elif name in self._children:
             return self._children[name]
         else:
-            raise KeyError("No children called " + name)
+            raise_error(KeyError("No children called " + name))
 
 
     # Methods to emulate container types:
@@ -363,7 +383,9 @@ class ConfigNode(object):
         elif key in self._children:
             return self._children[key]
         else:
-            raise KeyError("{0} not in {1}".format(key, self._canon_name()))
+            raise_error(KeyError(
+                "{0} not in {1}".format(key, self._canon_name())
+            ))
 
 
     def __setitem__(self, key, value):
@@ -383,9 +405,9 @@ class ConfigNode(object):
 
 
     def __iter__(self):
-        for k in self.cn._reference_children:
+        for k in self._reference_children:
             yield k
-        for k in self.cn.children:
+        for k in self._children:
             yield k
 
 
@@ -393,7 +415,7 @@ class DirNode(ConfigNode):
     def __init__(self, name, dir_name):
         """ Takes a directory name as well """
         ConfigNode.__init__(self, name)
-        self._dir_name = dir_name
+        self.__dict__["_dir_name"] = dir_name
         for item in os.listdir(dir_name):
             if item[-5:] == ".json":
                 self._append(JsonNode(item[0:-5], dir_name + "/" + item))
@@ -411,7 +433,7 @@ class JsonNode(ConfigNode):
     def __init__(self, name, file_name):
         """ Takes a filename as well """
         ConfigNode.__init__(self, name)
-        self._file_name = file_name
+        self.__dict__["_file_name"] = file_name
         with open(file_name, "r") as f:
             j = json.load(f)
         self._load_dict(j)
