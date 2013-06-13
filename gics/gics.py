@@ -191,7 +191,7 @@ def link_refs(config):
                         # print("Failed to get ref for " + attrib)
 
 
-def get_ref(config, name):
+def get_ref(config, name, debug=False):
     """ Used to find the part of the config in the name place.
     
     Args:
@@ -211,6 +211,8 @@ def get_ref(config, name):
         try:
             cur = cur._any_children(p)
         except KeyError:
+            if debug:
+                print("missed", name, "(" + p + ")")
             return None
     return cur
 
