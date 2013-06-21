@@ -214,6 +214,12 @@ def get_ref(config, name, debug=False):
             if debug:
                 print("missed", name, "(" + p + ")")
             return None
+    if (isinstance(cur, basestring)
+            and len(cur) > 4
+            and cur[0:2] == REF_DELIMS[0]
+            and cur[-2:] == REF_DELIMS[1]):
+        return None
+        
     return cur
 
 
@@ -437,7 +443,10 @@ class JsonNode(ConfigNode):
         ConfigNode.__init__(self, name)
         self.__dict__["_file_name"] = file_name
         with open(file_name, "r") as f:
-            j = json.load(f)
+            try:
+                j = json.load(f)
+            except ValueError as e:
+                raise ValueError("Bad json file " + file_name, e)
         self._load_dict(j)
 
             
